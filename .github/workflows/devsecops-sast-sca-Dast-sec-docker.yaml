@@ -31,10 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
+      - name: Install test dependencies only
         run: |
-          pip install -r flask-app/requirements.txt
-          pip install pytest
+          pip install flask pytest python-dotenv
       - name: Run unit tests
         run: pytest flask-app/tests/
 
