@@ -92,11 +92,11 @@ jobs:
           docker tag flask-app:latest ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
       - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u nolet7 --password-stdin
       - name: Tag and Push to GitHub Container Registry
         run: |
-          docker tag flask-app:latest ghcr.io/${{ github.repository_owner }}/flask-app:latest
-          docker push ghcr.io/${{ github.repository_owner }}/flask-app:latest
+          docker tag flask-app:latest ghcr.io/nolet7/flask-app:latest
+          docker push ghcr.io/nolet7/flask-app:latest
       - name: Save image as artifact (for local use or later stages)
         run: docker save flask-app:latest -o flask-app.tar
       - name: Upload image artifact
