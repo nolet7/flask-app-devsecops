@@ -38,6 +38,8 @@ jobs:
           echo "APP_PASSWORD=adminpass" >> $GITHUB_ENV
           pip install flask pytest python-dotenv
       - name: Run unit tests
+        env:
+          PYTHONPATH: ./flask-app
         run: pytest flask-app/tests/
 
   build:
