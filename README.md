@@ -23,3 +23,4 @@ flask-app-devsecops/
 1. Build and push Docker image
 2. Sync app in Argo CD
 3. Vault injects runtime secrets
+# test credential cache
