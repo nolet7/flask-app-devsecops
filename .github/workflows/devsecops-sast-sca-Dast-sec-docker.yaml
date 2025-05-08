@@ -1,4 +1,4 @@
- name: DevSecOps CI Pipeline - Full
+name: DevSecOps CI Pipeline - Full
 
   on:
     push:
