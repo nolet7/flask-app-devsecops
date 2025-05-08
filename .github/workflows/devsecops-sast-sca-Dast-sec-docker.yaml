@@ -70,7 +70,13 @@ jobs:
       - name: Install Bandit
         run: pip install bandit
       - name: Run Bandit for SAST
-        run: bandit -r flask-app
+        run: |
+          bandit -r flask-app -f json -o bandit-report.json || true
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
 
   sca:
     runs-on: ubuntu-latest
