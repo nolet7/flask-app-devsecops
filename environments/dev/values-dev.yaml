@@ -1,4 +1,5 @@
 image:
+  repository: ghcr.io/nolet7
   tag: dev-latest
 vault:
   role: flask-app-dev-role

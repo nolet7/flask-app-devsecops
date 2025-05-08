@@ -1,4 +1,5 @@
 image:
+  repository: ghcr.io/nolet7
   tag: stage-latest
 vault:
   role: flask-app-stage-role

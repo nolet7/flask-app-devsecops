@@ -1,26 +1,33 @@
 apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: flask-app
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "{{ .Values.vault.role }}"
-    vault.hashicorp.com/agent-inject-secret-APP_USERNAME: "{{ .Values.vault.path }}#APP_USERNAME"
-    vault.hashicorp.com/agent-inject-secret-APP_PASSWORD: "{{ .Values.vault.path }}#APP_PASSWORD"
-    vault.hashicorp.com/agent-inject-secret-APP_SECRET_KEY: "{{ .Values.vault.path }}#APP_SECRET_KEY"
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
+  kind: Deployment
+  metadata:
+    name: flask-app
+    labels:
       app: flask-app
-  template:
-    metadata:
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: flask-app
+    template:
+      metadata:
+        annotations:
+          vault.hashicorp.com/agent-inject: "true"
+          vault.hashicorp.com/role: "flask-app-dev-role"
+          vault.hashicorp.com/agent-inject-secret-env: "secret/data/flask"
+          vault.hashicorp.com/agent-inject-template-env: |
+            export APP_SECRET_KEY="{{ with secret \"secret/data/flask\" }}{{ .Data.data.APP_SECRET_KEY }}{{ end }}"
+            export APP_USERNAME="{{ with secret \"secret/data/flask\" }}{{ .Data.data.APP_USERNAME }}{{ end }}"
+            export APP_PASSWORD="{{ with secret \"secret/data/flask\" }}{{ .Data.data.APP_PASSWORD }}{{ end }}"
       labels:
         app: flask-app
-    spec:
-      serviceAccountName: flask-app-sa
-      containers:
+      spec:
+        serviceAccountName: flask-app
+        containers:
         - name: flask-app
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ .Values.image.repository }}/flask-app:{{ .Values.image.tag | default "latest" }}
           ports:
-            - containerPort: 5000
+          - containerPort: 5000
+          envFrom:
+          - configMapRef:
+              name: ignore-if-using-vault  # optional placeholder
