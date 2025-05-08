@@ -1,5 +1,5 @@
 ---
-name: DevSecops_CI_Pipeline_Full
+name: Epic5_Helm_K8s_Deployment
 
 # Trigger the workflow on pushes and pull requests to main
 on:
@@ -99,3 +99,36 @@ jobs:
           name: flask-app-image
           path: flask-app.tar
 
+  # Deploy to Dev using Helm
+  helm_deploy_dev:
+    name: Task 5.1 & 5.2 - Deploy to Dev with Helm
+    runs-on: ubuntu-latest
+    needs: [build_and_push]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Deploy to Dev
+        run: |
+          helm upgrade --install flask-dev ./flask-app-helm \
+            --namespace dev --create-namespace \
+            -f environments/dev/values-dev.yaml \
+            --set ingress.host=192.168.0.189
+
+  # Deploy to Stage using Helm
+  helm_deploy_stage:
+    name: Task 5.3 - Deploy to Stage with Helm
+    runs-on: ubuntu-latest
+    needs: [build_and_push]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Deploy to Stage
+        run: |
+          helm upgrade --install flask-stage ./flask-app-helm \
+            --namespace stage --create-namespace \
+            -f environments/stage/values-stage.yaml \
+            --set ingress.host=192.168.0.160
