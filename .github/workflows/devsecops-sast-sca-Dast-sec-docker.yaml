@@ -35,7 +35,7 @@ jobs:
         run: |
           pip install flask pytest python-dotenv
       - name: Run unit tests
-        run: pytest flask-app/tests/
+        run: PYTHONPATH=./flask-app pytest flask-app/tests/
 
   build:
     runs-on: ubuntu-latest
