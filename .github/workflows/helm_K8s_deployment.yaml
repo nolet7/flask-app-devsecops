@@ -113,7 +113,8 @@ jobs:
         run: |
           helm upgrade --install flask-dev ./flask-app-helm \
             --namespace dev --create-namespace \
-            -f environments/dev/values-dev.yaml
+            -f environments/dev/values-dev.yaml \
+            --set ingress.host=192.168.0.189
 
   # Deploy to Stage using Helm
   helm_deploy_stage:
@@ -129,5 +130,6 @@ jobs:
         run: |
           helm upgrade --install flask-stage ./flask-app-helm \
             --namespace stage --create-namespace \
-            -f environments/stage/values-stage.yaml
+            -f environments/stage/values-stage.yaml \
+            --set ingress.host=192.168.0.160
 
