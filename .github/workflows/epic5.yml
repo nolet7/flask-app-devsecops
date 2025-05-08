@@ -1,0 +1,131 @@
+---
+name: Epic5_Helm_K8s_Deployment_SelfHosted_Updated
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint:
+    name: Code Quality - Flake8 Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Flake8
+        run: pip install flake8
+      - name: Create Flake8 Config
+        run: |
+          echo "[flake8]" > .flake8
+          echo "max-line-length = 120" >> .flake8
+          echo "exclude = __init__.py" >> .flake8
+      - name: Run lint
+        run: |
+          if [ -f .flake8 ]; then
+            flake8 --config=.flake8 flask-app/*.py
+          else
+            echo "Flake8 config not found!" && exit 1
+          fi
+
+  test:
+    name: Unit Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test dependencies only
+        run: |
+          echo "APP_SECRET_KEY=testing-secret" >> $GITHUB_ENV
+          echo "APP_USERNAME=admin" >> $GITHUB_ENV
+          echo "APP_PASSWORD=adminpass" >> $GITHUB_ENV
+          pip install flask pytest python-dotenv
+      - name: Run unit tests
+        env:
+          PYTHONPATH: ./flask-app
+        run: pytest flask-app/tests/
+
+  sast:
+    name: Static App Security Test - Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bandit
+        run: pip install bandit
+      - name: Run Bandit for SAST
+        run: |
+          bandit -r flask-app -f json -o bandit-report.json || true
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  sca:
+    name: Software Composition Analysis - pip-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pip-audit
+        run: pip install pip-audit
+      - name: Run pip-audit for SCA
+        run: pip-audit -r flask-app/requirements.txt
+
+  build_and_push:
+    name: Docker Build, Scan, and Push
+    runs-on: ubuntu-latest
+    needs: [lint, test, sast, sca]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t flask-app:latest ./flask-app
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'flask-app:latest'
+          format: 'table'
+          exit-code: '0'
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Tag and Push to Docker Hub
+        run: |
+          docker tag flask-app:latest ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
+      - name: Save image as artifact
+        run: docker save flask-app:latest -o flask-app.tar
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flask-app-image
+          path: flask-app.tar
+
+  helm_deploy_dev:
+    name: Task 5.1 & 5.2 - Deploy to Dev with Helm
+    runs-on: [self-hosted, dev]
+    needs: [build_and_push]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm on Dev Runner
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Deploy Helm chart to Dev
+        run: |
+          helm upgrade --install flask-dev ./flask-app-helm \
+            --namespace dev --create-namespace \
+            -f environments/dev/values-dev.yaml \
+            --set ingress.host=192.168.0.189
+
+  helm_deploy_stage:
+    name: Task 5.3 - Deploy to Stage with Helm
+    runs-on: [self-hosted, stage]
+    needs: [build_and_push]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm on Stage Runner
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Deploy Helm chart to Stage
+        run: |
+          helm upgrade --install flask-stage ./flask-app-helm \
+            --namespace stage --create-namespace \
+            -f environments/stage/values-stage.yaml \
+            --set ingress.host=192.168.0.160
