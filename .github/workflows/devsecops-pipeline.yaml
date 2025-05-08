@@ -1,0 +1,36 @@
+name: DevSecOps CI Pipeline
+
+  on:
+    push:
+      branches: [ "main" ]
+    pull_request:
+      branches: [ "main" ]
+
+  jobs:
+    lint:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install Flake8
+          run: pip install flake8
+        - name: Run lint
+          run: flake8 flask-app/*.py
+
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install dependencies
+          run: |
+            pip install -r flask-app/requirements.txt
+            pip install pytest
+        - name: Run unit tests
+          run: pytest flask-app/tests/
+
+    build:
+      runs-on: ubuntu-latest
+      needs: [lint, test]
+      steps:
+        - uses: actions/checkout@v4
+        - name: Build Docker image
+          run: docker build -t flask-app:latest ./flask-app

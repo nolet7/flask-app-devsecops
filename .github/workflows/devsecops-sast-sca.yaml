@@ -1,0 +1,54 @@
+name: DevSecOps CI Pipeline - Full
+
+  on:
+    push:
+      branches: [ "main" ]
+    pull_request:
+      branches: [ "main" ]
+
+  jobs:
+    lint:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install Flake8
+          run: pip install flake8
+        - name: Run lint
+          run: flake8 flask-app/*.py
+
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install dependencies
+          run: |
+            pip install -r flask-app/requirements.txt
+            pip install pytest
+        - name: Run unit tests
+          run: pytest flask-app/tests/
+
+    build:
+      runs-on: ubuntu-latest
+      needs: [lint, test]
+      steps:
+        - uses: actions/checkout@v4
+        - name: Build Docker image
+          run: docker build -t flask-app:latest ./flask-app
+
+    sast:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install Bandit
+          run: pip install bandit
+        - name: Run Bandit for SAST
+          run: bandit -r flask-app
+
+    sca:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install pip-audit
+          run: pip install pip-audit
+        - name: Run pip-audit for SCA
+          run: pip-audit -r flask-app/requirements.txt
