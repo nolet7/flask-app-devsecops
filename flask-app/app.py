@@ -1,11 +1,14 @@
 from flask import Flask, render_template_string, request, redirect, url_for, session
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("APP_SECRET_KEY", "default-secret")
+app.secret_key = os.getenv("APP_SECRET_KEY")
 
-USERNAME = os.getenv("APP_USERNAME", "admin")
-PASSWORD = os.getenv("APP_PASSWORD", "password")
+USERNAME = os.getenv("APP_USERNAME")
+PASSWORD = os.getenv("APP_PASSWORD")
 
 @app.route('/')
 def index():
