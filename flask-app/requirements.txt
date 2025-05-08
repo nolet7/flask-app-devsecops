@@ -1,0 +1,5 @@
+flask
+pytest
+bandit
+pip-audit
+python-dotenv

@@ -1,0 +1,4 @@
+image:
+  tag: dev-latest
+vault:
+  role: flask-app-dev-role

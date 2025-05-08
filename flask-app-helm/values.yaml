@@ -1,0 +1,13 @@
+image:
+  repository: your-dockerhub/flask-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+vault:
+  role: flask-app-role
+  path: secret/data/flask
+  enabled: true
+
+service:
+  type: LoadBalancer
+  port: 80

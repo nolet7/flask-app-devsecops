@@ -1,0 +1,35 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test-secure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r flask-app/requirements.txt
+          pip install docker pytest
+
+      - name: Run Unit Tests
+        run: pytest flask-app/tests
+
+      - name: Run SAST (Bandit)
+        run: bandit -r flask-app
+
+      - name: Run SCA (pip-audit)
+        run: pip-audit
+
+      - name: Build Docker Image
+        run: |
+          docker build -t flask-app:latest flask-app

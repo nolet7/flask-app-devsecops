@@ -1,0 +1,4 @@
+image:
+  tag: stage-latest
+vault:
+  role: flask-app-stage-role
